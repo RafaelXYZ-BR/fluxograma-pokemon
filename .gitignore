@@ -1,0 +1,5 @@
+# Ignore arquivos temporários e build local
+node_modules/
+dist/
+.DS_Store
+*.log

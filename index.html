@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxograma Pokémon</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+    // ===== Helpers de UI (JS puro) =====
+    function StepCard({ children }) {
+      return (
+        <div className="w-full max-w-3xl rounded-2xl shadow-lg border bg-white p-6 md:p-8 flex flex-col gap-4">
+          {children}
+        </div>
+      );
+    }
+
+    function Pill({ children }) {
+      return (
+        <span className="inline-block rounded-full px-3 py-1 text-xs md:text-sm bg-slate-100 border text-slate-700">
+          {children}
+        </span>
+      );
+    }
+
+    function OptionButton({ label, onClick }) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className="w-full md:w-auto text-left md:text-center rounded-xl border px-4 py-3 transition hover:shadow-md bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        >
+          {label}
+        </button>
+      );
+    }
+
+    const LEGENDARY_IMG = {
+      "Scarlet": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1007.png",
+      "Violet": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1008.png",
+      "Brilliant Diamond": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/483.png",
+      "Shining Pearl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/484.png",
+      "Sword": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/888.png",
+      "Shield": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/889.png",
+      "Pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+      "Eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png",
+    };
+
+    const LEGENDARY_IMG_ALT = {
+      "Scarlet": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/1007.png",
+      "Violet": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/1008.png",
+      "Brilliant Diamond": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/0483.png",
+      "Shining Pearl": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/0484.png",
+      "Sword": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/0888.png",
+      "Shield": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/0889.png",
+      "Pikachu": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/025.png",
+      "Eevee": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/133.png",
+    };
+
+    const LEGENDARY_META = {
+      "Scarlet": { types: ["Lutador", "Dragão"], bst: 670, role: "ofensivo físico" },
+      "Violet": { types: ["Elétrico", "Dragão"], bst: 670, role: "ofensivo especial/mobilidade" },
+      "Brilliant Diamond": { types: ["Aço", "Dragão"], bst: 680, role: "misto com bulk" },
+      "Shining Pearl": { types: ["Água", "Dragão"], bst: 680, role: "misto versátil" },
+      "Sword": { types: ["Fada", "Aço"], bst: 660, role: "ofensivo veloz" },
+      "Shield": { types: ["Lutador", "Aço"], bst: 660, role: "defensivo com suporte" },
+      "Pikachu": { types: ["Elétrico"], bst: 320, role: "velocidade e utilidade" },
+      "Eevee": { types: ["Normal"], bst: 325, role: "equilibrado e adaptável" },
+    };
+
+    const TYPE_ICON_MAP = {
+      "Lutador": "fighting",
+      "Dragão": "dragon",
+      "Elétrico": "electric",
+      "Fada": "fairy",
+      "Aço": "steel",
+      "Água": "water",
+      "Normal": "normal",
+    };
+
+    const TYPE_STYLE = {
+      "Lutador": { bg: "#C03028", fg: "#FFFFFF" },
+      "Dragão": { bg: "#7038F8", fg: "#FFFFFF" },
+      "Elétrico": { bg: "#F8D030", fg: "#111827" },
+      "Fada": { bg: "#EE99AC", fg: "#111827" },
+      "Aço": { bg: "#B8B8D0", fg: "#111827" },
+      "Água": { bg: "#6890F0", fg: "#FFFFFF" },
+      "Normal": { bg: "#A8A878", fg: "#111827" },
+    };
+
+    function TypeIcon({ type }) {
+      const key = TYPE_ICON_MAP[type];
+      const src = key ? `https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/${key}.svg` : null;
+      const style = TYPE_STYLE[type] ?? { bg: "#E5E7EB", fg: "#111827" };
+      return (
+        <div className="flex items-center gap-1">
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border"
+            style={{ backgroundColor: style.bg, color: style.fg, borderColor: "rgba(0,0,0,0.08)" }}
+          >
+            {src && <img src={src} alt={type} className="w-4 h-4" aria-hidden="true" loading="lazy" decoding="async" />}
+            <span className="text-[11px] leading-none">{type}</span>
+          </span>
+        </div>
+      );
+    }
+
+    function normalizeOptionLabel(label) {
+      return label.split("(")[0].trim();
+    }
+
+    function legendKeyForLabel(label) {
+      const probe = normalizeOptionLabel(label);
+      return Object.keys(LEGENDARY_IMG).find((k) => probe.startsWith(k));
+    }
+
+    function ImageOption({ label, onClick }) {
+      const key = legendKeyForLabel(label);
+      const primary = key ? LEGENDARY_IMG[key] : undefined;
+      const fallback = key ? LEGENDARY_IMG_ALT[key] : undefined;
+      const meta = key ? LEGENDARY_META[key] : undefined;
+      const [src, setSrc] = React.useState(primary ?? null);
+
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          className="group relative w-full rounded-2xl border bg-white overflow-hidden transition shadow-sm hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+          aria-label={`Escolher ${label}`}
+        >
+          <div className="aspect-[4/3] bg-slate-50 grid place-items-center">
+            {src ? (
+              <img
+                src={src}
+                alt={label}
+                className="max-h-full object-contain p-4 transition-transform group-hover:scale-[1.03]"
+                onError={() => {
+                  if (fallback && src !== fallback) setSrc(fallback);
+                  else setSrc(null);
+                }}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div className="text-slate-400 text-sm">Imagem indisponível</div>
+            )}
+          </div>
+          <div className="p-3 text-center">
+            <div className="font-medium">{label}</div>
+            {meta ? (
+              <div className="mt-1 text-xs text-slate-600 leading-snug flex flex-col items-center">
+                <div className="flex gap-2 justify-center">
+                  {meta.types.map((t) => (<TypeIcon key={t} type={t} />))}
+                </div>
+                <div>BST: {meta.bst} — Perfil: {meta.role}</div>
+              </div>
+            ) : (
+              <div className="mt-1 text-xs text-slate-400">Detalhes indisponíveis</div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-amber-300" />
+        </button>
+      );
+    }
+
+    // ===== Dados do catálogo =====
+    const GAMES = {
+      LG_PIKA: {
+        title: "Pokémon Let's Go Pikachu",
+        note: "Experiência super acessível e introdutória.",
+        tags: ["iniciante", "linear", "nostálgico"],
+        img: "https://tse3.mm.bing.net/th/id/OIP.0PTcVHBIPdBV_wehwZjGjQHaHa?pid=Api",
+      },
+      LG_EEVEE: {
+        title: "Pokémon Let's Go Eevee",
+        note: "Experiência super acessível e introdutória.",
+        tags: ["iniciante", "linear", "nostálgico"],
+        img: "https://tse3.mm.bing.net/th/id/OIP.E4tPXJt4Jke5lVd5XydE8wHaHa?pid=Api",
+      },
+      ARCEUS: {
+        title: "Pokémon Legends: Arceus",
+        note: "Exploração destacada; exige mais do jogador.",
+        tags: ["exploração"],
+        img: "https://tse4.mm.bing.net/th/id/OIP.BcJnhtYtxNo6MU5Re2gXjgHaHa?pid=Api",
+      },
+      SCARLET: {
+        title: "Pokémon Scarlet",
+        note: "Mundo aberto e competitivo ativo.",
+        tags: ["mundo aberto", "competitivo atual"],
+        img: "https://tse2.mm.bing.net/th/id/OIP.4Amy1k4a0tpzbSyy-Pm2QAHaHa?pid=Api",
+      },
+      VIOLET: {
+        title: "Pokémon Violet",
+        note: "Mundo aberto e competitivo ativo.",
+        tags: ["mundo aberto", "competitivo atual"],
+        img: "https://tse4.mm.bing.net/th/id/OIP.jCcrArfzx_ogsv3GoZRbSAHaEK?pid=Api",
+      },
+      BDP: {
+        title: "Pokémon Brilliant Diamond",
+        note: "Uma aventura clássica de Pokémon - Remake da 4ª geração",
+        tags: ["nostálgico", "remake"],
+        img: "https://tse2.mm.bing.net/th/id/OIP.CBFGWABgcgHmzk7KsQohUQHaMC?pid=Api",
+      },
+      SP: {
+        title: "Pokémon Shining Pearl",
+        note: "Uma aventura clássica de Pokémon - Remake da 4ª geração",
+        tags: ["nostálgico", "remake"],
+        img: "https://tse2.mm.bing.net/th/id/OIP.UC3KKAPr5nMclCH3uuGEqgHaHa?pid=Api",
+      },
+      SWORD: {
+        title: "Pokémon Sword",
+        note: "Competitivo anterior ainda funcional.",
+        tags: ["competitivo"],
+        img: "https://tse4.mm.bing.net/th/id/OIP.JPHhzPf7DIAXsInXh3i8-gHaHa?pid=Api",
+      },
+      SHIELD: {
+        title: "Pokémon Shield",
+        note: "Competitivo anterior ainda funcional.",
+        tags: ["competitivo"],
+        img: "https://tse1.mm.bing.net/th/id/OIP.zt1irSHbBi_vvLGkYRPrTQHaEK?pid=Api",
+      },
+      LZA: {
+        title: "Pokémon Legends: Z-A",
+        note: "Exploração intensa com combate dinâmico em tempo real.",
+        tags: ["exploração", "batalha dinâmica"],
+        img: "https://tse2.mm.bing.net/th/id/OIP.LrI42Ajfmdem2YR9x2Ac0gHaMA?pid=Api",
+      },
+    };
+
+    function PokemonFlowApp() {
+      const [stack, setStack] = React.useState([]);
+      const [current, setCurrent] = React.useState("q_contact");
+      const [result, setResult] = React.useState(null);
+      const [liveMsg, setLiveMsg] = React.useState("");
+      const questionTitleRef = React.useRef(null);
+
+      const pathTags = React.useMemo(() => stack.map((s) => s.label), [stack]);
+
+      React.useEffect(() => {
+        try {
+          const saved = localStorage.getItem("pkm-flow-state");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.current && Array.isArray(parsed.stack)) {
+              setStack(parsed.stack);
+              setCurrent(parsed.current);
+              setResult(parsed.result);
+            }
+          }
+        } catch {}
+      }, []);
+
+      React.useEffect(() => {
+        try {
+          localStorage.setItem("pkm-flow-state", JSON.stringify({ stack, current, result }));
+        } catch {}
+      }, [stack, current, result]);
+
+      React.useEffect(() => {
+        if (typeof document === "undefined") return;
+        if (result) document.title = `Recomendação: ${GAMES[result].title}`;
+        else document.title = "Fluxograma Pokémon";
+      }, [result]);
+
+      React.useEffect(() => {
+        if (current !== "result") {
+          queueMicrotask(() => questionTitleRef.current && questionTitleRef.current.focus && questionTitleRef.current.focus());
+        }
+      }, [current]);
+
+      const reset = React.useCallback(() => {
+        setStack([]);
+        setCurrent("q_contact");
+        setResult(null);
+        setLiveMsg("Fluxo reiniciado.");
+        try { localStorage.removeItem("pkm-flow-state"); } catch {}
+      }, []);
+
+      const back = React.useCallback(() => {
+        if (stack.length === 0) return;
+        const newStack = stack.slice(0, -1);
+        setStack(newStack);
+        recomputeFromAnswers(newStack);
+      }, [stack]);
+
+      function recomputeFromAnswers(newStack) {
+        setResult(null);
+        let node = "q_contact";
+        let res = null;
+
+        function transition(label) {
+          switch (node) {
+            case "q_contact":
+              node = label === "Sim" ? "q_battle_type" : "q_gaming_exp";
+              break;
+            case "q_gaming_exp":
+              node = label === "Sim" ? "q_battle_type" : "q_letsgo_edition";
+              break;
+            case "q_battle_type":
+              if (label === "Batalha dinâmica") { node = "result"; res = "LZA"; }
+              else if (label === "Batalha por turno") { node = "q_profile"; }
+              break;
+            case "q_profile":
+              if (label === "Explorador") node = "q_explorer_choice";
+              else if (label === "Casual") node = "q_letsgo_edition";
+              else if (label === "Nostálgico") node = "q_nostalgic_branch";
+              else if (label === "Competitivo") node = "q_competitive_gen";
+              break;
+            case "q_competitive_gen":
+              if (label.startsWith("8ª geração")) { node = "q_competitive_title"; }
+              else if (label.startsWith("9ª geração")) { node = "q_sv_edition"; }
+              break;
+            case "q_explorer_choice":
+              if (label === "Exploração livre") { node = "q_free_exploration"; }
+              else if (label === "Exploração linear") { node = "q_linear_focus"; }
+              break;
+            case "q_free_exploration":
+              if (label === "Mundo aberto") { node = "q_sv_edition"; }
+              else if (label === "Áreas abertas") { node = "result"; res = "ARCEUS"; }
+              break;
+            case "q_linear_focus":
+              if (label === "Competitivo") { node = "q_competitive_title"; }
+              else if (label === "Apresentação nostálgica") { node = "q_bdsp_edition"; }
+              break;
+            case "q_nostalgic_branch":
+              if (label === "Remake 1ª geração") { node = "q_letsgo_edition"; }
+              else if (label === "Remake 4ª geração") { node = "q_bdsp_edition"; }
+              break;
+            case "q_letsgo_edition":
+              if (label === "Pikachu") { node = "result"; res = "LG_PIKA"; }
+              else if (label === "Eevee") { node = "result"; res = "LG_EEVEE"; }
+              break;
+            case "q_competitive_title":
+              if (normalizeOptionLabel(label).startsWith("Sword")) { node = "result"; res = "SWORD"; }
+              else if (normalizeOptionLabel(label).startsWith("Shield")) { node = "result"; res = "SHIELD"; }
+              break;
+            case "q_bdsp_edition":
+              if (normalizeOptionLabel(label).startsWith("Brilliant Diamond")) { node = "result"; res = "BDP"; }
+              else if (normalizeOptionLabel(label).startsWith("Shining Pearl")) { node = "result"; res = "SP"; }
+              break;
+            case "q_sv_edition":
+              if (normalizeOptionLabel(label).startsWith("Scarlet")) { node = "result"; res = "SCARLET"; }
+              else if (normalizeOptionLabel(label).startsWith("Violet")) { node = "result"; res = "VIOLET"; }
+              break;
+          }
+        }
+
+        for (const a of newStack) transition(a.label);
+        setCurrent(node);
+        setResult(res);
+      }
+
+      const choose = React.useCallback((optionLabel) => {
+        const newStack = [...stack, { node: current, label: optionLabel }];
+        let nextNode = current;
+        let newResult = null;
+
+        switch (current) {
+          case "q_contact":
+            nextNode = optionLabel === "Sim" ? "q_battle_type" : "q_gaming_exp";
+            break;
+          case "q_gaming_exp":
+            nextNode = optionLabel === "Não" ? "q_letsgo_edition" : "q_battle_type";
+            break;
+          case "q_battle_type":
+            if (optionLabel === "Batalha dinâmica") { nextNode = "result"; newResult = "LZA"; }
+            else if (optionLabel === "Batalha por turno") { nextNode = "q_profile"; }
+            break;
+          case "q_profile":
+            if (optionLabel === "Explorador") nextNode = "q_explorer_choice";
+            else if (optionLabel === "Casual") nextNode = "q_letsgo_edition";
+            else if (optionLabel === "Nostálgico") nextNode = "q_nostalgic_branch";
+            else if (optionLabel === "Competitivo") nextNode = "q_competitive_gen";
+            break;
+          case "q_competitive_gen":
+            if (optionLabel.startsWith("8ª geração")) { nextNode = "q_competitive_title"; }
+            else if (optionLabel.startsWith("9ª geração")) { nextNode = "q_sv_edition"; }
+            break;
+          case "q_explorer_choice":
+            if (optionLabel === "Exploração livre") { nextNode = "q_free_exploration"; }
+            else if (optionLabel === "Exploração linear") { nextNode = "q_linear_focus"; }
+            break;
+          case "q_free_exploration":
+            if (optionLabel === "Mundo aberto") { nextNode = "q_sv_edition"; }
+            else if (optionLabel === "Áreas abertas") { nextNode = "result"; newResult = "ARCEUS"; }
+            break;
+          case "q_linear_focus":
+            if (optionLabel === "Competitivo") { nextNode = "q_competitive_title"; }
+            else if (optionLabel === "Apresentação nostálgica") { nextNode = "q_bdsp_edition"; }
+            break;
+          case "q_nostalgic_branch":
+            if (optionLabel === "Remake 1ª geração") { nextNode = "q_letsgo_edition"; }
+            else if (optionLabel === "Remake 4ª geração") { nextNode = "q_bdsp_edition"; }
+            break;
+          case "q_letsgo_edition":
+            if (optionLabel === "Pikachu") { nextNode = "result"; newResult = "LG_PIKA"; }
+            else if (optionLabel === "Eevee") { nextNode = "result"; newResult = "LG_EEVEE"; }
+            break;
+          case "q_competitive_title":
+            if (normalizeOptionLabel(optionLabel).startsWith("Sword")) { nextNode = "result"; newResult = "SWORD"; }
+            else if (normalizeOptionLabel(optionLabel).startsWith("Shield")) { nextNode = "result"; newResult = "SHIELD"; }
+            break;
+          case "q_bdsp_edition":
+            if (normalizeOptionLabel(optionLabel).startsWith("Brilliant Diamond")) { nextNode = "result"; newResult = "BDP"; }
+            else if (normalizeOptionLabel(optionLabel).startsWith("Shining Pearl")) { nextNode = "result"; newResult = "SP"; }
+            break;
+          case "q_sv_edition":
+            if (normalizeOptionLabel(optionLabel).startsWith("Scarlet")) { nextNode = "result"; newResult = "SCARLET"; }
+            else if (normalizeOptionLabel(optionLabel).startsWith("Violet")) { nextNode = "result"; newResult = "VIOLET"; }
+            break;
+        }
+
+        setStack(newStack);
+        setCurrent(nextNode);
+        setResult(newResult);
+        if (newResult) setLiveMsg(`Recomendação gerada: ${GAMES[newResult].title}`);
+      }, [current, stack]);
+
+      const questionMap = React.useMemo(() => ({
+        q_contact: {
+          title: "Você já teve contato com a franquia Pokémon?",
+          options: ["Sim", "Não"],
+        },
+        q_gaming_exp: {
+          title: "Você tem experiência com jogos?",
+          options: ["Sim", "Não"],
+        },
+        q_battle_type: {
+          title: "Você prefere batalha por turno ou batalha dinâmica?",
+          options: ["Batalha por turno", "Batalha dinâmica"],
+          color: "bg-amber-50",
+        },
+        q_profile: {
+          title: "Qual é o seu perfil de jogador?",
+          options: ["Explorador", "Casual", "Nostálgico", "Competitivo"],
+        },
+        q_competitive_gen: {
+          title: "Qual geração competitiva você prefere?",
+          options: ["8ª geração (DYNAMAX)", "9ª geração (TERASTAL)"],
+          color: "bg-rose-50",
+        },
+        q_explorer_choice: {
+          title: "Você prefere exploração livre ou exploração linear?",
+          options: ["Exploração livre", "Exploração linear"],
+          color: "bg-emerald-50",
+        },
+        q_free_exploration: {
+          title: "No modo exploração livre, o que você prefere?",
+          options: ["Mundo aberto", "Áreas abertas"],
+          color: "bg-green-50",
+        },
+        q_linear_focus: {
+          title: "O que você prioriza na exploração linear?",
+          options: ["Competitivo", "Apresentação nostálgica"],
+          color: "bg-emerald-50",
+        },
+        q_letsgo_edition: {
+          title: "Qual você prefere?",
+          options: ["Pikachu", "Eevee"],
+          color: "bg-yellow-50",
+        },
+        q_competitive_title: {
+          title: "Qual você prefere?",
+          options: ["Sword (Zacian)", "Shield (Zamazenta)"],
+          color: "bg-indigo-50",
+        },
+        q_bdsp_edition: {
+          title: "Qual você prefere?",
+          options: ["Brilliant Diamond (Dialga)", "Shining Pearl (Palkia)"],
+          color: "bg-blue-50",
+        },
+        q_sv_edition: {
+          title: "Qual você prefere?",
+          options: ["Scarlet (Koraidon)", "Violet (Miraidon)"],
+          color: "bg-purple-50",
+        },
+        q_nostalgic_branch: {
+          title: "Você prefere o remake da 1ª geração ou da 4ª geração?",
+          options: ["Remake 1ª geração", "Remake 4ª geração"],
+          color: "bg-blue-50",
+        },
+        result: null,
+      }), []);
+
+      const question = current !== "result" ? questionMap[current] : null;
+      const game = result ? GAMES[result] : null;
+
+      return (
+        <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center gap-6 py-10">
+          <header className="w-full max-w-4xl px-4 flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Fluxograma Pokémon</h1>
+            </div>
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-lg border px-3 py-2 text-sm hover:shadow bg-white"
+              aria-label="Reiniciar o fluxo desde o início"
+            >
+              Recomeçar
+            </button>
+          </header>
+
+          <div className="w-full max-w-4xl px-4 flex flex-wrap items-center gap-2" aria-live="polite">
+            {stack.length === 0 ? (
+              <Pill>Início</Pill>
+            ) : (
+              <>
+                <Pill>Início</Pill>
+                {stack.map((s, i) => (
+                  <React.Fragment key={`${s.node}-${i}`}>
+                    <span className="text-slate-400">›</span>
+                    <Pill>{s.label}</Pill>
+                  </React.Fragment>
+                ))}
+              </>
+            )}
+          </div>
+
+          {current !== "result" && question && (
+            <StepCard>
+              <div className={`rounded-xl p-4 ${question.color ?? "bg-white"}`}>
+                <h2
+                  ref={questionTitleRef}
+                  tabIndex={-1}
+                  className="text-xl md:text-2xl font-semibold focus:outline-none"
+                >
+                  {question.title}
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                {['q_sv_edition','q_bdsp_edition','q_competitive_title','q_letsgo_edition'].includes(current)
+                  ? question.options.map((opt) => (
+                      <ImageOption key={opt} label={opt} onClick={() => choose(opt)} />
+                    ))
+                  : question.options.map((opt) => (
+                      <OptionButton key={opt} label={opt} onClick={() => choose(opt)} />
+                    ))}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={back}
+                  className="rounded-lg border px-3 py-2 text-sm hover:shadow bg-white disabled:opacity-50"
+                  disabled={stack.length === 0}
+                >
+                  Voltar
+                </button>
+                <button type="button" onClick={reset} className="rounded-lg border px-3 py-2 text-sm hover:shadow bg-white">
+                  Recomeçar
+                </button>
+              </div>
+              <div className="sr-only" aria-live="polite">{liveMsg}</div>
+            </StepCard>
+          )}
+
+          {current === "result" && game && (
+            <StepCard>
+              <div className="flex flex-col gap-3">
+                <h2 className="text-2xl font-bold">Recomendação</h2>
+                <div className="rounded-xl border p-4 bg-white grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                  {game.img && (
+                    <img
+                      src={game.img}
+                      alt={`Capa de ${game.title}`}
+                      className="w-full rounded-xl border md:col-span-1"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  <div className="md:col-span-2">
+                    <h3 className="text-xl font-semibold">{game.title}</h3>
+                    {game.note && <p className="text-slate-700 mt-1">{game.note}</p>}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {game.tags?.map((t) => (<Pill key={t}>{t}</Pill>))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <h4 className="font-semibold mb-1">Caminho escolhido</h4>
+                  <p className="text-slate-700 text-sm">{pathTags.length ? pathTags.join(" › ") : "Início"}</p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={back} className="rounded-lg border px-3 py-2 text-sm hover:shadow bg-white">Voltar</button>
+                  <button type="button" onClick={reset} className="rounded-lg border px-3 py-2 text-sm hover:shadow bg-white">Recomeçar</button>
+                </div>
+              </div>
+            </StepCard>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<PokemonFlowApp />);
+  </script>
+</body>
+</html>
