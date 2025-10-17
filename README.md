@@ -1,30 +1,4 @@
-# Fluxograma Pokémon
+# 🌟 Fluxograma Pokémon
 
-Este repositório contém apenas os arquivos de **build** da aplicação de recomendação de jogos Pokémon.
-Ele está preparado para ser publicado via **GitHub Pages**.
-
-## 🚀 Como publicar
-
-1. Crie um repositório público no GitHub chamado `fluxograma-pokemon` (ou outro nome de sua escolha).
-2. Extraia o conteúdo deste arquivo ZIP e cole dentro da pasta do repositório clonado.
-3. Execute os comandos:
-
-```bash
-git init
-git add .
-git commit -m "Publicação inicial da demo"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/fluxograma-pokemon.git
-git push -u origin main
-```
-
-4. Vá em **Settings → Pages → Build and deployment** e:
-   - Em *Source*, selecione **Deploy from a branch**
-   - Em *Branch*, escolha `main` e a pasta `/ (root)`
-
-5. Acesse a URL:
-```
-https://SEU-USUARIO.github.io/fluxograma-pokemon/
-```
-
-✅ Pronto! Seu cliente poderá testar a aplicação diretamente do navegador.
+O **Fluxograma Pokémon** é uma aplicação web interativa que ajuda o usuário a descobrir **qual jogo de Pokémon para Nintendo Switch mais combina com seu estilo de jogador**.  
+Por meio de um fluxo de perguntas simples e visuais, a ferramenta sugere títulos de forma personalizada — ideal para quem está começando ou para fãs que querem uma nova experiência.
